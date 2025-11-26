@@ -22,7 +22,10 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY ./app /app/app
 
 # Expose port
-EXPOSE 80
+#EXPOSE 80
 
 # Start Gunicorn with Uvicorn workers (same behavior as tiangolo image)
-CMD ["gunicorn", "app.main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:80"]
+#CMD ["gunicorn", "app.main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:${PORT}"]
+
+# Shell form (allows $PORT expansion)
+CMD gunicorn app.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
