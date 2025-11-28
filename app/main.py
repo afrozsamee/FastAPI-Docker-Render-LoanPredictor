@@ -1,17 +1,13 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from app.model.model import predict_pipeline, __version__ as model_version
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 
 app = FastAPI(title="Loan Approval API")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Or ["http://localhost:3000"]
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 # ----------------------------
 # Input schema (RAW features)
@@ -37,6 +33,13 @@ class LoanOut(BaseModel):
     loan_status: int
     probability: float
 
+# Mount the static folder at /static
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Route to serve the frontend page
+@app.get("/frontend")
+def serve_frontend():
+    return FileResponse("static/index.html")
 
 @app.get("/")
 def home():
