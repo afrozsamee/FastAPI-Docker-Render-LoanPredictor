@@ -1,0 +1,142 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
+from app.model.model import predict_pipeline, __version__ as model_version
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from pathlib import Path
+import os
+
+app = FastAPI(title="Loan Approval API")
+
+
+
+# ----------------------------
+# Input schema (RAW features)
+# ----------------------------
+class LoanIn(BaseModel):
+    person_age: int
+    person_income: float
+    person_home_ownership: str   # <--- categorical
+    person_emp_length: float
+    loan_intent: str             # <--- categorical
+    loan_grade: str              # <--- categorical (A, B, C, ...)
+    loan_amnt: float
+    loan_int_rate: float
+    loan_percent_income: float
+    cb_person_default_on_file: str  # "Y" / "N"
+    cb_person_cred_hist_length: int
+
+
+# ----------------------------
+# Output schema
+# ----------------------------
+class LoanOut(BaseModel):
+    loan_status: int
+    probability: float
+
+STATIC_DIR = os.path.join(os.getcwd(), "static")
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+@app.get("/frontend")
+def serve_frontend():
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+
+
+@app.get("/")
+def home():
+    return {"health_check": "OK", "model_version": model_version}
+
+
+@app.post("/predict", response_model=LoanOut)
+def predict(payload: LoanIn):
+
+    # Convert Pydantic object → dict
+    data = payload.dict()
+
+    # Run model
+    pred, prob = predict_pipeline(data)
+
+    return {
+        "loan_status": int(pred),
+        "probability": float(prob)
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+###
+docker File
+# Use Python 3.12 slim image
+FROM python:3.12-slim
+
+# Set the working directory
+WORKDIR /app
+
+# Install system dependencies (required for numpy, pandas, sklearn)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY ./requirements.txt /app/requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Copy application code
+COPY ./app /app/app
+COPY ./static /app/static  # ← ADD THIS LINE
+# Expose port
+#EXPOSE 80
+
+# Start Gunicorn with Uvicorn workers (same behavior as tiangolo image)
+#CMD ["gunicorn", "app.main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:${PORT}"]
+
+# Shell form (allows $PORT expansion)
+CMD gunicorn app.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+
+
+
+
+model.py
+# app/model/model.py
+import sys
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+sys.path.append(str(ROOT_DIR))
+
+import pickle
+from custom_preprocessor import CustomPreprocessor
+import pandas as pd
+import os
+
+
+__version__ = "0.1.0"
+BASE_DIR = Path(__file__).resolve(strict=True).parent
+
+with open(f"{BASE_DIR}/trained_loanpipeline-{__version__}.pkl", "rb") as f:
+    model = pickle.load(f)  # now pickle can find CustomPreprocessor
+
+def predict_pipeline(data: dict):
+    df = pd.DataFrame([data])
+    # Predict
+    pred = model.predict(df)[0]
+    prob = model.predict_proba(df)[0][1]
+
+    return pred, prob
+
+
