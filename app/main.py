@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from app.model.model import predict_pipeline, __version__ as model_version
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-
+import os
 
 app = FastAPI(title="Loan Approval API")
 
@@ -33,13 +33,15 @@ class LoanOut(BaseModel):
     loan_status: int
     probability: float
 
-# Mount the static folder at /static
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Correct absolute path to the static folder
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
-# Route to serve the frontend page
+# Mount static folder
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
 @app.get("/frontend")
 def serve_frontend():
-    return FileResponse("static/index.html")
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 
 @app.get("/")
 def home():
