@@ -33,15 +33,14 @@ class LoanOut(BaseModel):
     loan_status: int
     probability: float
 
-# Correct absolute path to the static folder
-STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+STATIC_DIR = os.path.join(os.getcwd(), "static")
 
-# Mount static folder
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/frontend")
 def serve_frontend():
     return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+
 
 @app.get("/")
 def home():
