@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Copy application code
 COPY ./app /app/app
-COPY static /app/static  # ← ADD THIS LINE
+COPY ./static /app/static
 # Expose port
 #EXPOSE 80
 
