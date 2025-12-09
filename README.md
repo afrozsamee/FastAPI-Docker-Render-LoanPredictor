@@ -3,7 +3,7 @@
 ### *Production-Ready Machine Learning API deployed on Render*
 
 🚀 **Live Demo:** [https://loanpredictor-wntj.onrender.com](https://loanpredictor-wntj.onrender.com)
-📂 **Repository:** *(add your GitHub repo link here)*
+📂 **Repository:** *https://github.com/afrozsamee/FastAPI-Docker-Render-LoanPredictor/tree/main*
 
 ---
 
