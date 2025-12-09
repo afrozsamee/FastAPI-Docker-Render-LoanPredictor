@@ -4,6 +4,7 @@
 
 🚀 **Live Demo:** [https://loanpredictor-wntj.onrender.com](https://loanpredictor-wntj.onrender.com)
 📂 **Repository:** *https://github.com/afrozsamee/FastAPI-Docker-Render-LoanPredictor/tree/main*
+**Notebook:** *https://nbviewer.org/github/afrozsamee/Loan-Prediction_ML/blob/main/AI_CW.ipynb*
 
 ---
 
